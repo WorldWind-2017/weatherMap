@@ -15,10 +15,26 @@ requirejs({paths:{
 },['src/WorldWind',
         './LayerManager', 'src/formats/kml/KmlFile',
         'src/formats/kml/controls/KmlTreeVisibility', './Pin', 'jquery'],
-    function (ww,
-              LayerManager, KmlFile, KmlTreeVisibility) {
+    function (ww, LayerManager)
+    {
         "use strict";
 
+        var wwd = new WorldWind.WorldWindow("canvasOne");
+        var layers = [
+            {layer: new WorldWind.BMNGLayer(), enabled: false},
+            {layer: new WorldWind.BMNGLandsatLayer(), enabled: false},
+            {layer: new WorldWind.BingAerialLayer(null), enabled: false},
+            {layer: new WorldWind.BingAerialWithLabelsLayer(null), enabled: true},
+            {layer: new WorldWind.BingRoadsLayer(null), enabled: false},
+            {layer: new WorldWind.CompassLayer(), enabled: false},
+            {layer: new WorldWind.CoordinatesDisplayLayer(wwd), enabled: true},
+            {layer: new WorldWind.ViewControlsLayer(wwd), enabled: true}
+        ];
+
+        for (var l = 0; l < layers.length; l++) {
+            layers[l].layer.enabled = layers[l].enabled;
+            wwd.addLayer(layers[l].layer);
+        }
 
         //returns API URL as a string
         function createAPIURL(lat, long) {
@@ -51,4 +67,23 @@ requirejs({paths:{
                 }
             })
         }
+
+        var handleClick = function (recognizer)
+        {
+            // Obtain the event location.
+            var x = recognizer.clientX,
+                y = recognizer.clientY;
+
+            // Perform the pick. Must first convert from window coordinates to canvas coordinates, which are
+            // relative to the upper left corner of the canvas rather than the upper left corner of the page.
+            var pickList = wwd.pick(wwd.canvasCoordinates(x, y));
+
+            // If only one thing is picked and it is the terrain, tell the world window to go to the picked location.
+            if (pickList.objects.length == 1 && pickList.objects[0].isTerrain) {
+                var position = pickList.objects[0].position;
+                wwd.goTo(new WorldWind.Location(position.latitude, position.longitude));
+            } else {
+                handlePick(x,y);
+            }
+        };
     });
