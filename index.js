@@ -51,4 +51,4 @@ requirejs({paths:{
                 }
             })
         }
-    }
+    });
